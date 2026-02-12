@@ -5,7 +5,7 @@ exports.createTask = async (req, res) => {
   try {
     const task = await Task.create({
       ...req.body,
-      userId: req.user.id
+      userId: Number(req.user.id)
     });
 
     const createdTask = await Task.findByPk(task.id, {
@@ -26,9 +26,8 @@ exports.getTasks = async (req, res) => {
     const { status } = req.query;
 
     let whereClause = {};
-
     if (req.user.role !== "admin") {
-      whereClause.userId = req.user.id;
+      whereClause.userId = Number(req.user.id);
     }
 
     if (status) {
@@ -54,11 +53,15 @@ exports.updateTask = async (req, res) => {
   try {
     const task = await Task.findByPk(req.params.id);
 
-    if (!task)
+    if (!task) {
       return res.status(404).json({ message: "Task Not Found" });
-
-    if (req.user.role !== "admin" && task.userId !== req.user.id)
+    }
+    if (
+      req.user.role !== "admin" &&
+      Number(task.userId) !== Number(req.user.id)
+    ) {
       return res.status(403).json({ message: "Forbidden" });
+    }
 
     await task.update(req.body);
 
@@ -79,11 +82,15 @@ exports.deleteTask = async (req, res) => {
   try {
     const task = await Task.findByPk(req.params.id);
 
-    if (!task)
+    if (!task) {
       return res.status(404).json({ message: "Task Not Found" });
-
-    if (req.user.role !== "admin" && task.userId !== req.user.id)
+    }
+    if (
+      req.user.role !== "admin" &&
+      Number(task.userId) !== Number(req.user.id)
+    ) {
       return res.status(403).json({ message: "Forbidden" });
+    }
 
     await task.destroy();
 

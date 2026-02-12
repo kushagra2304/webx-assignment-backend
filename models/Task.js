@@ -8,10 +8,20 @@ const Task = sequelize.define("Task", {
   status: {
     type: DataTypes.ENUM("pending", "in-progress", "completed"),
     defaultValue: "pending"
+  },
+  userId: { 
+    type: DataTypes.INTEGER,
+    allowNull: false
   }
 });
 
-User.hasMany(Task, { onDelete: "CASCADE" });
-Task.belongsTo(User);
+User.hasMany(Task, { 
+  foreignKey: "userId",
+  onDelete: "CASCADE" 
+});
+
+Task.belongsTo(User, { 
+  foreignKey: "userId" 
+});
 
 module.exports = Task;

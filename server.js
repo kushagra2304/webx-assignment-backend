@@ -7,7 +7,13 @@ require("dotenv").config();
 const errorMiddleware = require("./middleware/errorMiddleware");
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://webx-assignment-frontend.vercel.app"
+  ],
+  credentials: true
+}));
 app.use(express.json());
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/tasks", require("./routes/taskRoutes"));

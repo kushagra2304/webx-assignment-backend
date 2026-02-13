@@ -1,6 +1,6 @@
 const Task = require("../models/Task");
 const User = require("../models/User");
-
+const { Op } = require("sequelize");
 exports.createTask = async (req, res) => {
   try {
     const task = await Task.create({
@@ -23,8 +23,11 @@ exports.createTask = async (req, res) => {
 
 exports.getTasks = async (req, res) => {
   try {
-    const { status } = req.query;
-
+    const { status, search = "" } = req.query;
+    const page = Number(req.query.page) || 1;     //pagination
+    const limit = Number(req.query.limit) || 5;
+    const offset = (page - 1) * limit;
+  
     let whereClause = {};
     if (req.user.role !== "admin") {
       whereClause.userId = Number(req.user.id);
@@ -34,17 +37,38 @@ exports.getTasks = async (req, res) => {
       whereClause.status = status;
     }
 
-    const tasks = await Task.findAll({
+if (search && search.trim() !== "") {    //SEARCH
+  whereClause[Op.and] = [
+    ...(whereClause[Op.and] || []),
+    {
+      [Op.or]: [
+        { title: { [Op.like]: `%${search}%` } },
+        { description: { [Op.like]: `%${search}%` } }
+      ]
+    }
+  ];
+}
+
+    const { count, rows } = await Task.findAndCountAll({
       where: whereClause,
       include: {
         model: User,
         attributes: ["id", "fullName", "email"]
       },
-      order: [["createdAt", "DESC"]]
+      order: [["createdAt", "DESC"]],
+      limit,
+      offset
     });
 
-    res.json(tasks);
+    res.json({
+      totalTasks: count,
+      currentPage: page,
+      totalPages: Math.ceil(count / limit),
+      tasks: rows
+    });
+
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -56,6 +80,7 @@ exports.updateTask = async (req, res) => {
     if (!task) {
       return res.status(404).json({ message: "Task Not Found" });
     }
+
     if (
       req.user.role !== "admin" &&
       Number(task.userId) !== Number(req.user.id)
@@ -73,6 +98,7 @@ exports.updateTask = async (req, res) => {
     });
 
     res.json(updatedTask);
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -85,6 +111,7 @@ exports.deleteTask = async (req, res) => {
     if (!task) {
       return res.status(404).json({ message: "Task Not Found" });
     }
+
     if (
       req.user.role !== "admin" &&
       Number(task.userId) !== Number(req.user.id)
@@ -95,6 +122,7 @@ exports.deleteTask = async (req, res) => {
     await task.destroy();
 
     res.json({ message: "Task Deleted Successfully" });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

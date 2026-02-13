@@ -11,7 +11,8 @@ const Task = sequelize.define("Task", {
   },
   userId: { 
     type: DataTypes.INTEGER,
-    allowNull: false
+    allowNull: false,
+    field: "UserId"
   }
 });
 

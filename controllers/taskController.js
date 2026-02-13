@@ -24,7 +24,7 @@ exports.createTask = async (req, res) => {
 exports.getTasks = async (req, res) => {
   try {
     const { status, search = "" } = req.query;
-    const page = Number(req.query.page) || 1;     //pagination
+    const page = Number(req.query.page) || 1;        //pagination
     const limit = Number(req.query.limit) || 5;
     const offset = (page - 1) * limit;
   
